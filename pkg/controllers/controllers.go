@@ -6,6 +6,7 @@ import (
         "io"
         "strings"
         "log"
+	"net/url"
         "golang.org/x/net/html"
 )
 
@@ -13,9 +14,15 @@ func Fuzz(){
         fmt.Println("Fuzzing target ...")
 }
 
-func URLHandler (url string){
+func URLHandler (urlString string){
         // Sending a Get request; Having the response page HTML code
-        resp, err := http.Get(url)
+	u, err := url.Parse(urlString)
+	if err != nil {
+		fmt.Println("Error in URL string: ", err)
+		return
+	}
+
+        resp, err := http.Get(u.String())
         if err != nil {
                 fmt.Println("Error in handling the URL: ", err)
                 return
