@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/shayantrix/smartfuzz/pkg/controllers"
 	"fmt"
 	"github.com/spf13/cobra"
 )
