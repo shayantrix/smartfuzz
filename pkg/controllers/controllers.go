@@ -1,74 +1,149 @@
 package controllers
 
 import (
-        "fmt"
 	"bufio"
-	"os"
-        "net/http"
-        "io"
-        "strings"
-        "log"
+	"fmt"
+	"time"
+	"io"
+	"log"
+	"net/http"
 	"net/url"
-        "golang.org/x/net/html"
+	"os"
+	"strings"
+
+	"golang.org/x/net/html"
 )
 
-func Fuzz(){
-        fmt.Println("Fuzzing target ...")
+func Fuzz() {
+	fmt.Println("Fuzzing target ...")
 }
 
-func URLHandler (urlString string){
-        // Sending a Get request; Having the response page HTML code
+func URLHandler(urlString string) {
+	payload := Payload("/home/shayan/Desktop/projects/smartfuzz/pkg/controllers/payload.txt")
+	// Sending a Get request; Having the response page HTML code
+	client := &http.Client{
+		Timeout: 60 * time.Second,
+	}
+
 	u, err := url.Parse(urlString)
 	if err != nil {
 		fmt.Println("Error in URL string: ", err)
 		return
 	}
 
-        resp, err := http.Get(u.String())
-        if err != nil {
-                fmt.Println("Error in handling the URL: ", err)
-                return
-        }
+	resp, err := client.Get(u.String())
+	if err != nil {
+		fmt.Println("Error in handling the URL: ", err)
+		return
+	}
 
-        defer resp.Body.Close()
+	defer resp.Body.Close()
 
-        body, err := io.ReadAll(resp.Body)
-        if err != nil{
-                fmt.Println("Error in parsing the response body: ", err)
-                return
-        }
-        // store html content 
-        htmlContent := string(body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error in parsing the response body: ", err)
+		return
+	}
+	// store html content
+	htmlContent := string(body)
 
-        //html parsing to have html.Node
-        doc, err := html.Parse(strings.NewReader(htmlContent))
-        if err != nil{
-                log.Fatal("Could not parse the html content: ", err)
-        }
+	//fmt.Println(htmlContent)
+	//html parsing to have html.Node
+	doc, err := html.Parse(strings.NewReader(htmlContent))
+	if err != nil {
+		log.Fatal("Could not parse the html content: ", err)
+	}
 
-        //finding html element nodes
-        var f func(*html.Node)
-        f = func(n *html.Node){
-                if n.Type == html.ElementNode && (n.Data == "input" || n.Data == "textarea" || n.Data == "form"){
-                        fmt.Println("Found: ", n.Data)
-                        for _, attr := range n.Attr{
-                                fmt.Printf(" - %s = %s\n", attr.Key, attr.Val)
-				if attr.Key == "name"{
+	//finding html element nodes
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode && (n.Data == "input" || n.Data == "textarea" || n.Data == "form") {
+			fmt.Println("Found: ", n.Data)
+			for _, attr := range n.Attr {
+				fmt.Printf(" - %s = %s\n", attr.Key, attr.Val)
+				if attr.Key == "name" {
 
-                        }
-                }
-                for c := n.FirstChild ; c != nil ; c = c.NextSibling {
-                        f(c)
+					//Here we kinda won the match, Cause its not controlled by JS
+					//So we try to send requsts to this <input> tag
+					//https://ililearn.com/?s=sda
+					//here the name is s and the value is "sda"
+					//func Post(url, contentType string, body io.Reader) (resp *Response, err error)
+					//func Get(url string) (resp *Response, err error)
+					//func PostForm(url string, data url.Values) (resp *Response, err error)
+
+					for _, item := range payload {
+						response, err := http.Get(u.String() + attr.Val + "=" + item)
+						if err != nil {
+							fmt.Println("Error in sending request: ", err)
+						}
+						if response.StatusCode != 200 {
+							//Send POST request
+							v := url.Values{}
+							v.Set(attr.Key, item)
+							PostRequest, err := http.PostForm(u.String(), v)
+							if err != nil {
+								fmt.Println("Error in sending Post form request: ", err)
+							} else {
+								fmt.Println("Found !!!!")
+								fmt.Println(item)
+								//body_req, err := io.ReadAll(PostRequest.Body)
+								//if err != nil{
+								//	log.Fatal("Error in parsing response body: ", err)
+								//}
+								//fmt.Println(string(body_req))
+								fmt.Println(PostRequest.StatusCode)
+							}
+						} else {
+							fmt.Println("Found !!!!")
+							fmt.Println(item)
+							//body_request, err := io.ReadAll(response.Body)
+							//if err != nil{
+							//	log.Fatal("Error in parsing response body: ", err)
+							//}
+
+							//fmt.Println(string(body_request))
+							fmt.Println(response.StatusCode)
+						}
+					}
+
+				}
+			}
 		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+                                f(c)
+                }
 	}
 
 	f(doc)
 
-	}
-
+	//for _, item := range payload{
+	//	fmt.Println(item)
+	//}
 }
 
+func Payload(path string) []string {
+	//os.ReadFile(name string)
+	//Open(file string) (io.Reader, error)
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal("Error in reading the payload file: ", err)
+	}
 
-//func Payload (path string) string{
-//	return path
-//}
+	defer file.Close()
+
+	//NewScanner(io.Reader)
+	scanner := bufio.NewScanner(file)
+
+	var payload []string
+
+	for scanner.Scan() {
+		//scanner.Text()
+		payload = append(payload, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return payload
+}
