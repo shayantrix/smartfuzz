@@ -106,36 +106,28 @@ func URLHandler(urlString string) {
 								fmt.Println("Error in sending Post form request: ", err)
 							}
 							if  ValidStatusCodes[PostRequest.StatusCode]{
+								fmt.Println("{\n")
 								fmt.Println("Found !!!!")
 								elapsedPost := time.Since(startPost)
-								if elapsedPost > 5 * time.Second {
+								fmt.Println(item)
+								if elapsedPost > 40 * time.Second {
 									fmt.Println("Could be vulnerable to sql injection time-base attack!!!")
 								}
-								fmt.Println(item)
-								//body_req, err := io.ReadAll(PostRequest.Body)
-								//if err != nil{
-								//	log.Fatal("Error in parsing response body: ", err)
-								//}
-								//fmt.Println(string(body_req))
-								fmt.Println(PostRequest.StatusCode)
+								fmt.Println("Response Status code: ",PostRequest.StatusCode)
+								fmt.Println("\n}\n")
 							}else{
 								fmt.Println("No potential SQL Injection may be found!")
 							}
 						} else {
 							elapse := time.Since(start)
-
-							if elapse > 5 * time.Second{
-								fmt.Println("Could be vulnerable to sql injection time-base attack!!!")
-							}
+							fmt.Println("{\n")
 							fmt.Println("Found !!!!")
 							fmt.Println(item)
-							//body_request, err := io.ReadAll(response.Body)
-							//if err != nil{
-							//	log.Fatal("Error in parsing response body: ", err)
-							//}
-
-							//fmt.Println(string(body_request))
-							fmt.Println(response.StatusCode)
+							if elapse > 40 * time.Second{
+								fmt.Println("Could be vulnerable to sql injection time-base attack!!!")
+							}
+							fmt.Println("Response Status code: ", response.StatusCode)
+							fmt.Println("\n}\n")
 						}
 					}
 
