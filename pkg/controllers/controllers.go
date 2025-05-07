@@ -161,7 +161,7 @@ func CommandInjection(urlString string) {
 }
 
 // Task: Add time base sql injection
-func URLHandler(urlString string) {
+func SqlInjection(urlString string) {
 	payload := Payload("/home/shayan/Desktop/projects/smartfuzz/pkg/controllers/time_payload.txt")
 	//Sending a Get request; Having the response page HTML code
 	client := &http.Client{
