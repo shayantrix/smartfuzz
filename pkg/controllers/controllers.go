@@ -26,7 +26,7 @@ func Fuzz() {
 }
 
 func CommandInjection(urlString string) {
-	payload := Payload("/home/shayan/Desktop/projects/smartfuzz/pkg/controllers/command_injection_payload.txt")
+	payload := Payload("./pkg/controllers/command_injection_payload.txt")
 
 	client := &http.Client{
 		Timeout: 60 * time.Second,
@@ -162,7 +162,7 @@ func CommandInjection(urlString string) {
 
 // Task: Add time base sql injection
 func SqlInjection(urlString string) {
-	payload := Payload("/home/shayan/Desktop/projects/smartfuzz/pkg/controllers/time_payload.txt")
+	payload := Payload("./pkg/controllers/time_payload.txt")
 	//Sending a Get request; Having the response page HTML code
 	client := &http.Client{
 		Timeout: 60 * time.Second,
